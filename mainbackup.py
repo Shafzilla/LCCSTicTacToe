@@ -14,9 +14,6 @@ class TicTacToeBoard:
         if self.board[row][col].set_player(player):
             self.moves += 1
 
-            return True
-        return False
-
     def get_board_square(self, row, col):
         return self.board[row][col].current_player
 
@@ -26,12 +23,14 @@ class TicTacToeBoard:
 
     def check_win(self):
         winner = None
-
+        print("Checking Winning func check rows")
         if not winner:
             winner = self.check_rows()
+        print("Checking Winning func check col")
 
         if not winner:
             winner = self.check_cols()
+        print("Checking Winning func check daigs")
 
         if not winner:
             winner = self.check_dias()
@@ -45,18 +44,18 @@ class TicTacToeBoard:
 
     def check_rows(self):
         for row in self.board:
-            if (row[0].current_player == row[1].current_player == row[2].current_player) and (row[0].current_player is not None):
+            if (row[0].current_player == row[1].current_player == row[2].current_player) and (
+                    row[0].current_player is not None):
                 return row[0].current_player
 
     def check_cols(self):
         row_1, row_2, row_3 = self.board
         for i in range(0, 3):
-
-            if (row_1[i].current_player == row_2[i].current_player == row_3[i].current_player) and row_1[i].current_player is not None:
+            if (row_1[i].current_player == row_2[i].current_player == row_3[i].current_player) and row_1[
+                i].current_player is not None:
                 return row_1[i].current_player
 
     def check_dias(self):
-
 
         if self.board[1][1].current_player is not None:
 
@@ -66,9 +65,12 @@ class TicTacToeBoard:
                 return self.board[0][0].current_player
 
     def playfield(self):
-        print(str(board.get_board_square(0, 0)) + '|' + str(board.get_board_square(0, 1)) + '|' + str(board.get_board_square(0, 2)))
-        print(str(board.get_board_square(1, 0)) + '|' + str(board.get_board_square(1, 1)) + '|' + str(board.get_board_square(1, 2)))
-        print(str(board.get_board_square(2, 0)) + '|' + str(board.get_board_square(2, 1)) + '|' + str(board.get_board_square(2, 2)))
+        print(str(board.get_board_square(0, 0)) + '|' + str(board.get_board_square(0, 1)) + '|' + str(
+            board.get_board_square(0, 2)))
+        print(str(board.get_board_square(1, 0)) + '|' + str(board.get_board_square(1, 1)) + '|' + str(
+            board.get_board_square(1, 2)))
+        print(str(board.get_board_square(2, 0)) + '|' + str(board.get_board_square(2, 1)) + '|' + str(
+            board.get_board_square(2, 2)))
 
 
 class TicTacToeSquare:
@@ -80,18 +82,17 @@ class TicTacToeSquare:
             self.current_player = player
             return True
         else:
-
-            print('Place has already been taken, go again')
+            print('Place has already been taken')
             return False
+
 
 player1 = None
 player2 = None
 
-def player_input():
 
+def player_input():
     global player1
     global player2
-
 
     while player1 != 'X' or player1 != 'O':
         player1 = input("Which do you want to be? (X or O): ")
@@ -110,7 +111,6 @@ def player_input():
 
 
 def player_choice():
-
     row = int(input("Choose a row: "))
     col = int(input("Choose a column: "))
     return row, col
@@ -146,29 +146,24 @@ if __name__ == '__main__':
     while not board.is_full():
         board.playfield()
         player1, player2 = player_input()
-
         while True:
-            player1_placed = False
-            player2_placed = False
-
 
             print("Player 1's turn.")
-            while not player1_placed:
-                player1_row, player1_col = player_choice()
-                player1_placed = board.update_board(player1_row, player1_col, player1)
-                board.playfield()
-                board.check_win()
-                board.check_draws()
+            player1_row, player1_col = player_choice()
+            board.update_board(player1_row, player1_col, player1)
+            board.playfield()
+            board.check_win()
+            board.check_draws()
             if board.game_status != "ongoing":
                 break
 
             print("Player 2's turn.")
-            while not player2_placed:
-                player2_row, player2_col = player_choice()
-                player2_placed = board.update_board(player2_row, player2_col, player2)
-                board.playfield()
-                board.check_win()
-                board.check_draws()
+            player2_row, player2_col = player_choice()
+            board.update_board(player2_row, player2_col, player2)
+
+            board.playfield()
+            board.check_win()
+            board.check_draws()
             if board.game_status != "ongoing":
                 break
         break
