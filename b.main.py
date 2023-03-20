@@ -1,8 +1,12 @@
 import csv
 import random
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 
 analytics_strings = []
-
+game_winners = []
 
 class Player:
 
@@ -27,8 +31,29 @@ class Player:
         first choosing the row and then the column
         :return: the row and column the player has chosen
         """
-        row = int(input("Choose a row: "))
-        col = int(input("Choose a column: "))
+        correct_row = False
+        correct_col = False
+
+        while not correct_row:
+            try:
+                row = int(input("Choose a row: "))
+            except ValueError:
+                print('Error. Try again and enter a number between 0 and 2')
+                continue
+            if 0 <= int(row) <= 2:
+                correct_row = True
+
+        if correct_row:
+            while not correct_col:
+                try:
+                    col = int(input("Choose a column: "))
+                except ValueError:
+                    print('Error. Try again and enter a number between 0 and 2')
+                    continue
+                if 0 <= int(col) <= 2:
+                    correct_col = True
+
+
         return row, col
 
     def get_input(self):
@@ -84,7 +109,7 @@ class TicTacToeBoard:
         :param col: the column to retrieve
         :return: returns the place on the board that was requested
         """
-        return self.board[row][col].current_player
+        return self.board[row][col].current_player if self.board[row][col].current_player else '-'
 
     def check_draws(self):
         """
@@ -110,6 +135,10 @@ class TicTacToeBoard:
 
         if winner:
             self.game_status = 'winner is ' + winner
+            game_winners.append(winner)
+            with  open('winners.csv', 'w') as csvfile:
+                csv_writer = csv.writer(csvfile, delimiter=',')
+                csv_writer.writerow(game_winners)
             return winner
 
     def is_full(self):
@@ -149,9 +178,9 @@ class TicTacToeBoard:
         if self.board[1][1].current_player is not None:
 
             if self.board[0][0].current_player == self.board[1][1].current_player == self.board[2][2].current_player:
-                return self.board[0][0].current_player
+                return self.board[1][1].current_player
             if self.board[0][2].current_player == self.board[1][1].current_player == self.board[2][0].current_player:
-                return self.board[0][0].current_player
+                return self.board[1][1].current_player
 
     def playfield(self):
         """
@@ -191,32 +220,45 @@ def player_input():
     global player1
     global player2
     signs = ['X', 'O']
-    num_player = input(
-        "enter the number of players \n 0 - simulation \n 1 - player vs computer \n 2 - player vs player \n \n enter: ")
-    if num_player == '0':
-        players = (Player(is_human=False), Player(is_human=False))
-        player1 = random.choice(signs)
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+    correct_players = False
 
-    if num_player == '1':
-        while player1 != 'X' or player1 != 'O':
-            print(player1)
-            player1 = input("Which do you want to be? (X or O): ")
-            player1 = player1.upper()
-            break
-        players = (Player(is_human=True), Player(is_human=False))
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+    while not correct_players:
 
-    if num_player == '2':
-        while player1 != 'X' or player1 != 'O':
-            player1 = input("Which do you want to be? (X or O): ")
-            player1 = player1.upper()
-            break
-        players = (Player(is_human=True), Player(is_human=True))
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+        num_player = input(
+            "enter the number of players \n 0 - simulation \n 1 - player vs computer \n 2 - player vs player \n \n "
+            "enter: ")
+        if num_player == '0':
+            players = (Player(is_human=False), Player(is_human=False))
+            player1 = random.choice(signs)
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        if num_player == '1':
+            while player1 != 'X' or player1 != 'O':
+                player1 = input("Which do you want to be? (X or O): ")
+                player1 = player1.upper()
+                if player1 == 'X' or player1 == 'O':
+                    break
+            players = (Player(is_human=True), Player(is_human=False))
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        if num_player == '2':
+            while player1 != 'X' or player1 != 'O':
+                player1 = input("Which do you want to be? (X or O): ")
+                player1 = player1.upper()
+                if player1 == 'X' or player1 == 'O':
+                    break
+            players = (Player(is_human=True), Player(is_human=True))
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        else:
+            print("enter the number of players \n 0 - simulation \n 1 - player vs computer \n 2 - player vs player \n \n "
+            "enter: ")
 
     return players
 
@@ -226,13 +268,15 @@ def replay():
     Function to allow the player to either return to the menu or end the game after a match has been concluded
     :return: true if the player wished to go to the menu, false if the player wishes to exit
     """
-    replay = input("\nDo you want to continue playing \n \n y - return to menu \n n - quit \n\n enter: ")
+
+    replay = input("\nDo you want to return to menu? \n \n y - return to menu \n n - quit \n\n enter: ")
     replay = replay.upper()
-    if replay == 'Y':
+    if replay == 'Y' or replay == 'YES' or replay == 'YEA' or replay == 'YE' or replay == 'YS':
         return True
-    elif replay == 'N':
+    else:
         print("Thanks for playing!")
         return False
+
 
 
 def write_csv(analytics_strings):
@@ -244,7 +288,6 @@ def write_csv(analytics_strings):
     with  open('boardmovedata.csv', 'w') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
         csv_writer.writerow(row_labels)
-
         csv_writer.writerows(analytics_strings)
 
 
@@ -273,8 +316,8 @@ if __name__ == '__main__':
                 else:
                     game_move_count += 1
                     board.playfield()
-                    board.check_win()
                     board.check_draws()
+                    board.check_win()
                     analytics_strings.append([game_count, player1.sign, game_move_count, player1_row, player1_col])
                 if board.game_status != "ongoing":
                     break
@@ -286,8 +329,8 @@ if __name__ == '__main__':
                 else:
                     game_move_count += 1
                     board.playfield()
-                    board.check_win()
                     board.check_draws()
+                    board.check_win()
                     analytics_strings.append([game_count, player2.sign, game_move_count, player2_row, player2_col])
                 if board.game_status != "ongoing":
                     break
