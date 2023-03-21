@@ -1,8 +1,12 @@
 import csv
 import random
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 
 analytics_strings = []
-
+game_winners = []
 
 class Player:
 
@@ -27,8 +31,29 @@ class Player:
         first choosing the row and then the column
         :return: the row and column the player has chosen
         """
-        row = int(input("Choose a row: "))
-        col = int(input("Choose a column: "))
+        correct_row = False
+        correct_col = False
+
+        while not correct_row:
+            try:
+                row = int(input("Choose a row: "))
+            except ValueError:
+                print('Error. Try again and enter a number between 0 and 2')
+                continue
+            if 0 <= int(row) <= 2:
+                correct_row = True
+
+        if correct_row:
+            while not correct_col:
+                try:
+                    col = int(input("Choose a column: "))
+                except ValueError:
+                    print('Error. Try again and enter a number between 0 and 2')
+                    continue
+                if 0 <= int(col) <= 2:
+                    correct_col = True
+
+
         return row, col
 
     def get_input(self):
@@ -84,7 +109,7 @@ class TicTacToeBoard:
         :param col: the column to retrieve
         :return: returns the place on the board that was requested
         """
-        return self.board[row][col].current_player
+        return self.board[row][col].current_player if self.board[row][col].current_player else '-'
 
     def check_draws(self):
         """
@@ -110,6 +135,12 @@ class TicTacToeBoard:
 
         if winner:
             self.game_status = 'winner is ' + winner
+            game_winners.append(winner)
+
+            with  open('winners.csv', 'a', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile, delimiter=',')
+                csv_writer.writerows(game_winners)
+                game_winners.clear()
             return winner
 
     def is_full(self):
@@ -149,9 +180,9 @@ class TicTacToeBoard:
         if self.board[1][1].current_player is not None:
 
             if self.board[0][0].current_player == self.board[1][1].current_player == self.board[2][2].current_player:
-                return self.board[0][0].current_player
+                return self.board[1][1].current_player
             if self.board[0][2].current_player == self.board[1][1].current_player == self.board[2][0].current_player:
-                return self.board[0][0].current_player
+                return self.board[1][1].current_player
 
     def playfield(self):
         """
@@ -185,38 +216,66 @@ player2 = None
 
 def player_input():
     """
-    Function that allows the the player/computer to choose their sign
+    Function that allows the  player/computer to choose their sign
     :return:
     """
     global player1
     global player2
     signs = ['X', 'O']
-    num_player = input(
-        "enter the number of players \n 0 - simulation \n 1 - player vs computer \n 2 - player vs player \n \n enter: ")
-    if num_player == '0':
-        players = (Player(is_human=False), Player(is_human=False))
-        player1 = random.choice(signs)
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+    correct_players = False
 
-    if num_player == '1':
-        while player1 != 'X' or player1 != 'O':
-            print(player1)
-            player1 = input("Which do you want to be? (X or O): ")
-            player1 = player1.upper()
-            break
-        players = (Player(is_human=True), Player(is_human=False))
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+    while not correct_players:
 
-    if num_player == '2':
-        while player1 != 'X' or player1 != 'O':
-            player1 = input("Which do you want to be? (X or O): ")
-            player1 = player1.upper()
-            break
-        players = (Player(is_human=True), Player(is_human=True))
-        players[0].set_sign(player1)
-        players[1].set_sign(list((set(signs) - set(player1)))[0])
+        num_player = input(
+            "enter the number of players \n 0 - simulation \n 1 - player vs computer \n 2 - player vs player \n \n "
+            "enter: ")
+        if num_player == '0':
+            players = (Player(is_human=False), Player(is_human=False))
+            player1 = random.choice(signs)
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        if num_player == '1':
+            while player1 != 'X' or player1 != 'O':
+                player1 = input("Which do you want to be? (X or O): ")
+                player1 = player1.upper()
+                if player1 == 'X' or player1 == 'O':
+                    break
+            players = (Player(is_human=True), Player(is_human=False))
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        if num_player == '2':
+            while player1 != 'X' or player1 != 'O':
+                player1 = input("Which do you want to be? (X or O): ")
+                player1 = player1.upper()
+                if player1 == 'X' or player1 == 'O':
+                    break
+            players = (Player(is_human=True), Player(is_human=True))
+            players[0].set_sign(player1)
+            players[1].set_sign(list((set(signs) - set(player1)))[0])
+            correct_players = True
+
+        if num_player == '3':
+            players = None, None
+            winners_list = []
+            file = open("winners.csv", "r")
+            fileReader = csv.reader(file)
+            for row in fileReader:
+                winners_list.append(row[0])
+            file.close()
+
+            player1Count = winners_list.count("X")
+            player2Count = winners_list.count("O")
+            print(player1Count)
+            print(player2Count)
+            correct_players = True
+            replay()
+
+        else:
+            continue
 
     return players
 
@@ -226,26 +285,34 @@ def replay():
     Function to allow the player to either return to the menu or end the game after a match has been concluded
     :return: true if the player wished to go to the menu, false if the player wishes to exit
     """
-    replay = input("\nDo you want to continue playing \n \n y - return to menu \n n - quit \n\n enter: ")
+
+    replay = input("\nDo you want to return to menu? \n \n y - return to menu \n n - quit \n\n enter: ")
     replay = replay.upper()
-    if replay == 'Y':
+    if replay == 'Y' or replay == 'YES' or replay == 'YEA' or replay == 'YE' or replay == 'YS':
         return True
-    elif replay == 'N':
+    else:
         print("Thanks for playing!")
         return False
+
 
 
 def write_csv(analytics_strings):
     """
     Function to gather the data from the game such as the number of the game, the player, the move, the row and the
-    column the the player chose :param analytics_strings:
+    column the  player chose
     """
-    row_labels = ['Game Number', 'Player', 'Move Count', 'Row', 'Column']
-    with  open('boardmovedata.csv', 'w') as csvfile:
+    with  open('boardmovedata.csv', 'a', newline='') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
-        csv_writer.writerow(row_labels)
-
         csv_writer.writerows(analytics_strings)
+
+def game_mode_selector():
+    while True:
+        selected_game_mode = input("\nSelect the game mode \n \n 1 - Play tic tac toe \n 2 - Analysis mode \n\n enter: ")
+        if selected_game_mode == '1':
+            return 'game'
+
+        if selected_game_mode == '2':
+            return 'analysis'
 
 
 if __name__ == '__main__':
@@ -258,42 +325,92 @@ if __name__ == '__main__':
         game_move_count = 0
 
         print("Welcome to Tic Tac Toe!")
+        game_mode = game_mode_selector()
 
-        while not board.is_full():
-            board.playfield()
-            player1, player2 = player_input()
-            while True:
-                player1_placed = False
-                player2_placed = False
+        if game_mode == 'game':
+            while not board.is_full():
+                board.playfield()
+                player1, player2 = player_input()
+                while True:
+                    player1_placed = False
+                    player2_placed = False
 
-                print("Player 1's turn.")
-                while not player1_placed:
-                    player1_row, player1_col = player1.get_input()
-                    player1_placed = board.update_board(player1_row, player1_col, player1.sign)
-                else:
-                    game_move_count += 1
-                    board.playfield()
-                    board.check_win()
-                    board.check_draws()
-                    analytics_strings.append([game_count, player1.sign, game_move_count, player1_row, player1_col])
-                if board.game_status != "ongoing":
-                    break
+                    print("Player 1's turn.")
+                    while not player1_placed:
+                        player1_row, player1_col = player1.get_input()
+                        player1_placed = board.update_board(player1_row, player1_col, player1.sign)
+                    else:
+                        game_move_count += 1
+                        board.playfield()
+                        board.check_draws()
+                        board.check_win()
+                        analytics_strings.append([game_count, player1.sign, game_move_count, player1_row, player1_col])
+                    if board.game_status != "ongoing":
+                        break
 
-                print("Player 2's turn.")
-                while not player2_placed:
-                    player2_row, player2_col = player2.get_input()
-                    player2_placed = board.update_board(player2_row, player2_col, player2.sign)
-                else:
-                    game_move_count += 1
-                    board.playfield()
-                    board.check_win()
-                    board.check_draws()
-                    analytics_strings.append([game_count, player2.sign, game_move_count, player2_row, player2_col])
-                if board.game_status != "ongoing":
-                    break
-            break
-        print('Game Over. Result is: ' + board.game_status)
-        replay_game = replay()
+                    print("Player 2's turn.")
+                    while not player2_placed:
+                        player2_row, player2_col = player2.get_input()
+                        player2_placed = board.update_board(player2_row, player2_col, player2.sign)
+                    else:
+                        game_move_count += 1
+                        board.playfield()
+                        board.check_draws()
+                        board.check_win()
+                        analytics_strings.append([game_count, player2.sign, game_move_count, player2_row, player2_col])
+                    if board.game_status != "ongoing":
+                        break
+                break
+            print('Game Over. Result is: ' + board.game_status)
+            replay_game = replay()
+
+        if game_mode == 'analysis':
+            winners_list = []
+            file = open("winners.csv", "r")
+            fileReader = csv.reader(file)
+            heat_map_lists = [
+                [0,0,0],
+                [0,0,0],
+                [0,0,0],
+                              ]
+
+            for row in fileReader:
+                winners_list.append(row[0])
+            file.close()
+
+            file = open("boardmovedata.csv", "r")
+            board_move_data = csv.reader(file)
+            next(board_move_data, None)
+
+            for row in board_move_data:
+                heat_map_lists[int(row[3])][int(row[4])] += 1
+
+            heatmap, heatmap_axis = plt.subplots()
+            im = heatmap_axis.imshow(heat_map_lists)
+
+            # Show all ticks and label them with the respective list entries
+            heatmap_axis.set_xticks(np.arange(3), labels=[1,2,3])
+            heatmap_axis.set_yticks(np.arange(3), labels=[1,2,3])
+
+            for i in range(3):
+                for j in range(3):
+                    text = heatmap_axis.text(j, i, heat_map_lists[i][j])
+
+            heatmap_axis.set_title("Number of moves per square")
+            plt.show()
+
+            player1Count = winners_list.count("X")
+            player2Count = winners_list.count("O")
+            xValues = ["X wins", "O wins"]
+            yValues = [player1Count, player2Count]
+            if player1Count > player2Count:
+                print("X is more likely to win")
+            elif player2Count > player1Count:
+                print("O is more likely to win")
+            plt.bar(xValues, yValues)
+            plt.show()
+
 
     write_csv(analytics_strings)
+    write_csv(game_winners)
 
